@@ -4,6 +4,7 @@
  */
 package com.dht.services;
 
+import com.dht.pojo.Choice;
 import com.dht.pojo.Level;
 import com.dht.pojo.Question;
 import com.dht.utils.JdbcConnector;
@@ -82,10 +83,56 @@ public class QuestionServices {
         
         return questions;
     }
+      public List<Question> getQuestion(int num) throws SQLException {
+        Connection conn = JdbcConnector.getInstance().connect();
+
+        PreparedStatement stm = conn.prepareCall("SELECT * FROM questionlimit ? order by rand()");
+       stm.setInt(1,num);
+        ResultSet rs = stm.executeQuery();
+        List<Question> questions = new ArrayList<>();
+        while (rs.next()) {
+            Question q = new Question.Builder(rs.getInt("id"),rs.getString("content"))
+                    .addChoices((this.getChoicesByQuestion(rs.getInt("id")))).build();
+            
+            
+            
+            questions.add(q);
+        }
+        
+        return questions;
+    }
      public boolean  delQuestion(int id) throws SQLException{
            Connection conn = JdbcConnector.getInstance().connect();
            PreparedStatement stm = conn.prepareCall("DELETE FROM question where id=?");
            stm.setInt(1, id);
           return stm.executeUpdate()>0;
+     }
+     public List<Question> getOptions(int num) throws SQLException {
+        Connection conn = JdbcConnector.getInstance().connect();
+
+        PreparedStatement stm = conn.prepareCall("SELECT * FROM question LIMIT ? ORDER BY RAND()");
+       stm.setInt(1,num);
+        ResultSet rs = stm.executeQuery();
+        List<Question> questions = new ArrayList<>();
+        while (rs.next()) {
+            Question q = new Question.Builder(rs.getInt("id"),rs.getString("content")).build();
+            
+            
+            questions.add(q);
+        }
+        
+        return questions;
+    }
+     public List<Choice> getChoicesByQuestion(int qId) throws SQLException{
+           Connection conn = JdbcConnector.getInstance().connect();
+           
+        PreparedStatement stm = conn.prepareCall("SELECT * FROM choice where question_id=?");
+       stm.setInt(1,qId);
+       ResultSet rs = stm.executeQuery();
+       List<Choice> choices = new ArrayList<>();
+       while(rs.next()){
+           Choice c = new Choice(rs.getInt("if"), rs.getString("content"),rs.getBoolean("is_correct"));
+       }
+       return choices;
      }
 }
